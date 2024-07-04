@@ -1,9 +1,16 @@
+import org.jetbrains.kotlin.storage.CacheResetOnProcessCanceled.enabled
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
 }
 
 android {
+
+    buildFeatures {
+        viewBinding = true
+    }
+
     namespace = "com.example.myapplication"
     compileSdk = 34
 
@@ -45,4 +52,22 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+
+    implementation("com.google.android.material:material:1.9.0")
+
+
+    // Retrofit
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+
+    // Lifecycle
+    implementation("androidx.lifecycle:lifecycle-viewmodel:2.6.1")
+    implementation("androidx.lifecycle:lifecycle-livedata:2.6.1")
+
+    // GSON
+    implementation("com.google.code.gson:gson:2.9.0")
+
+    // Coroutines
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.0")
 }

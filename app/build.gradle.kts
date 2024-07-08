@@ -1,12 +1,12 @@
-import org.jetbrains.kotlin.storage.CacheResetOnProcessCanceled.enabled
-
 plugins {
-    alias(libs.plugins.android.application)
-    alias(libs.plugins.jetbrains.kotlin.android)
+    id("com.android.application")
+    id("org.jetbrains.kotlin.android")
+    id("kotlin-parcelize")
+    id("kotlin-kapt")
+    id("com.google.dagger.hilt.android")
 }
 
 android {
-
     buildFeatures {
         viewBinding = true
     }
@@ -43,7 +43,6 @@ android {
 }
 
 dependencies {
-
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
@@ -54,7 +53,6 @@ dependencies {
     androidTestImplementation(libs.androidx.espresso.core)
 
     implementation("com.google.android.material:material:1.9.0")
-
 
     // Retrofit
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
@@ -70,4 +68,12 @@ dependencies {
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.0")
+
+    implementation("com.google.dagger:hilt-android:2.47")
+    kapt("com.google.dagger:hilt-android-compiler:2.47")
+    kaptAndroidTest("com.google.dagger:hilt-android-compiler:2.47")
+}
+
+kapt {
+    correctErrorTypes = true
 }

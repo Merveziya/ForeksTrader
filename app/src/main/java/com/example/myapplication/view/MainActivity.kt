@@ -33,11 +33,30 @@ class MainActivity : AppCompatActivity() {
 
         viewModel.uiState.observe(this,Observer{state ->
 
-            binding.textViewData.text = state.converterText ?: "Veri burada görünecek"
+            state.mypageDefaults?.forEach { stock ->
+                binding.textViewData.append(" ${stock.cod}, ${stock.gro}, ${stock.tke}, ${stock.def}\n \n ")
+            }
+
+            state.myPage?.forEach { column ->
+                binding.textView.append(" ${column.name},${column.key} \n \n")
+            }
+        })
+
+        viewModel.uiStatee.observe(this,Observer{state ->
+
+            state.fields?.forEach { attribute ->
+                binding.textView2.append(" ${attribute.tke}, ${attribute.clo}, ${attribute.pdd}, ${attribute.las}\n \n ")
+            }
+
+            state.stcs?.forEach { stcs ->
+                binding.textView3.append("${stcs}")
+
+            }
 
         })
 
         viewModel.getStockList()
+        viewModel.getRequestList()
     }
 
 }

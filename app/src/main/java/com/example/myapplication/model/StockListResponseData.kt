@@ -16,5 +16,7 @@ data class Column(
 
 data class StockListResponseData(
      @SerializedName("mypageDefaults") val mypageDefaults: List<Stock>? = null,
-     @SerializedName("mypage") val myPage: List<Column>? = null
+     @SerializedName("mypage") val myPage: List<Column>? = null,
+     val converterText: String? = null
+
 )

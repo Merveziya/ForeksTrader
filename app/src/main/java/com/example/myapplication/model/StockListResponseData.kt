@@ -2,7 +2,7 @@ package com.example.myapplication.model
 
 import com.google.gson.annotations.SerializedName
 
-data class Stock(
+data class StockListDetail(
      @SerializedName("cod") val cod: String? = null,
      @SerializedName("gro") val gro: String? = null,
      @SerializedName("tke") val tke: String? = null,
@@ -15,7 +15,6 @@ data class Column(
 )
 
 data class StockListResponseData(
-     @SerializedName("mypageDefaults") val mypageDefaults: List<Stock>? = null,
+     @SerializedName("mypageDefaults") val mypageDefaults: List<StockListDetail>? = null,
      @SerializedName("mypage") val myPage: List<Column>? = null,
-     val converterText: String? = null
 )

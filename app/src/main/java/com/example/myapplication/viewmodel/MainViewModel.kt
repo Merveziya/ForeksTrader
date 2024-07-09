@@ -9,8 +9,8 @@ import com.example.myapplication.model.StockRequestData
 import com.example.myapplication.model.service.ApiInterface
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
-import javax.inject.Inject
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
@@ -24,21 +24,22 @@ class MainViewModel @Inject constructor(
 
     init {
         getStockList()
-        getRequestList()
+        getRequestList("pdd,las", "GARAN.E.BIST~XU100.I.BIST")
     }
 
     fun getStockList() {
         viewModelScope.launch {
             try {
                 val response = apiInterface.getStockList()
-
                 if (response.isSuccessful) {
-                    val stockList = response.body()?.mypageDefaults ?: emptyList()
-                    uiStateMutable.value = response.body() ?: StockListResponseData(emptyList(), emptyList())
+                    val stockListResponseData = response.body() ?: StockListResponseData()
+                    uiStateMutable.value = stockListResponseData
 
-                    stockList.forEach { stock ->
-                        Log.d("MainViewModel", "Stock: ${stock.cod}, ${stock.def}, ${stock.gro}, ${stock.tke}")
+                    stockListResponseData.mypageDefaults?.forEach { StockListDetail ->
+                        Log.d("MainViewModel", "Stock: ${StockListDetail.cod}, ${StockListDetail.gro}, ${StockListDetail.tke},  ${StockListDetail.def}")
                     }
+                } else {
+                    Log.e("MainViewModel", "Error fetching stock list: ${response.errorBody()?.string()}")
                 }
             } catch (e: Exception) {
                 Log.e("MainViewModel", "Error fetching stock list", e)
@@ -46,21 +47,22 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    fun getRequestList() {
+    fun getRequestList(fields: String, stcs: String) {
         viewModelScope.launch {
             try {
-                val response = apiInterface.getRequestList()
-
+                val response = apiInterface.getRequestList(fields, stcs)
                 if (response.isSuccessful) {
-                    val requestList = response.body()?.fields ?: emptyList()
-                    uiStateMutablee.value = response.body() ?: StockRequestData(emptyList())
+                    val stockRequestData = response.body() ?: StockRequestData()
+                    uiStateMutablee.value = stockRequestData
 
-                    requestList.forEach { attribute ->
+                    stockRequestData.fields?.forEach { attribute ->
                         Log.d(
                             "MainViewModel",
                             "Attribute: ${attribute.tke}, ${attribute.clo}, ${attribute.pdd}, ${attribute.las}"
                         )
                     }
+                } else {
+                    Log.e("MainViewModel", "Error fetching request list: ${response.errorBody()?.string()}")
                 }
             } catch (e: Exception) {
                 Log.e("MainViewModel", "Error fetching request list", e)

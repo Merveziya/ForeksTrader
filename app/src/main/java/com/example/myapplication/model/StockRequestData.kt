@@ -3,15 +3,23 @@ package com.example.myapplication.model
 import com.google.gson.annotations.SerializedName
 
 data class Fields(
-@SerializedName("tke") val tke: String? = null,
-@SerializedName("clo") val clo: String? = null,
-@SerializedName("pdd") val pdd: String? = null,
-@SerializedName("las") val las: String? = null
+    val tke: String?,
+    val las: String?,
+    val pdd: String?,
+    val ddi: String?,
+    val low: String?,
+    val hig: String?,
+    val buy: String?,
+    val sel: String?,
+    val pdc: String?,
+    val cei: String?,
+    val flo: String?,
+    val gco: String?,
+    val clo: String?,
 )
 
 data class StockRequestData(
     @SerializedName("l") val fields: List<Fields>? = null,
-    @SerializedName("z") val stcs: String? = null,
-    val converterText2: String? = null
+    @SerializedName("z") val z: Int = 0,
 )
 

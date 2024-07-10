@@ -8,8 +8,10 @@ import com.example.myapplication.model.StockListResponseData
 import com.example.myapplication.model.StockRequestData
 import com.example.myapplication.model.service.ApiInterface
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 @HiltViewModel
@@ -23,27 +25,44 @@ class MainViewModel @Inject constructor(
     val uiStatee = uiStateMutablee.asLiveData()
 
     init {
-        getStockList()
-        getRequestList("pdd,las", "GARAN.E.BIST~XU100.I.BIST")
+        viewModelScope.launch {
+            val responseValue = getStockList()
+            if (responseValue!= null) {
+                val stcsList = responseValue.mypageDefaults?.map {
+                    it.cod
+                }
+
+                var codeString = ""
+                stcsList?.let { list ->
+                    list.forEach{
+                        codeString = codeString + it + "~"
+                    }
+                }
+                getRequestList("pdd,las",codeString)
+            }
+        }
     }
 
-    fun getStockList() {
-        viewModelScope.launch {
-            try {
-                val response = apiInterface.getStockList()
-                if (response.isSuccessful) {
-                    val stockListResponseData = response.body() ?: StockListResponseData()
-                    uiStateMutable.value = stockListResponseData
 
-                    stockListResponseData.mypageDefaults?.forEach { StockListDetail ->
-                        Log.d("MainViewModel", "Stock: ${StockListDetail.cod}, ${StockListDetail.gro}, ${StockListDetail.tke},  ${StockListDetail.def}")
-                    }
-                } else {
-                    Log.e("MainViewModel", "Error fetching stock list: ${response.errorBody()?.string()}")
+    suspend fun getStockList() = withContext(Dispatchers.IO){
+        try {
+            val response = apiInterface.getStockList()
+            if (response.isSuccessful) {
+                val stockListResponseData = response.body() ?: StockListResponseData()
+                uiStateMutable.value = stockListResponseData
+
+                stockListResponseData.mypageDefaults?.forEach { StockListDetail ->
+                    Log.d("MainViewModel", "Stock: ${StockListDetail.cod}, ${StockListDetail.gro}, ${StockListDetail.tke},  ${StockListDetail.def}")
                 }
-            } catch (e: Exception) {
-                Log.e("MainViewModel", "Error fetching stock list", e)
+                return@withContext stockListResponseData
+            } else {
+                Log.e("MainViewModel", "Error fetching stock list: ${response.errorBody()?.string()}")
+                return@withContext null
             }
+        } catch (e: Exception) {
+            Log.e("MainViewModel", "Error fetching stock list", e)
+            return@withContext null
+
         }
     }
 

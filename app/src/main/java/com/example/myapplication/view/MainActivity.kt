@@ -40,9 +40,5 @@ class MainActivity : AppCompatActivity() {
             }
         })
 
-        val fields = listOf("pdd", "las")
-        val stcs = listOf("GARAN.E.BIST", "XU100.I.BIST")
-
-        viewModel.getStockList()
     }
 }

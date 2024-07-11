@@ -29,7 +29,7 @@ class MainViewModel @Inject constructor(
             val responseValue = getStockList()
             if (responseValue!= null) {
                 val stcsList = responseValue.mypageDefaults?.map {
-                    it.cod
+                    it.tke
                 }
 
                 var codeString = ""

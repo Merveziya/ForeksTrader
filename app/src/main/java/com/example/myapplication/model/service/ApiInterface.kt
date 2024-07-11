@@ -10,10 +10,6 @@ interface ApiInterface {
     @GET("default/ForeksMobileInterviewSettings")
     suspend fun getStockList(): Response<StockListResponseData>
 
-    /*
-    @GET("ForeksMobileInterview?fields=las,pdd,ddi,low,hig,buy,sel,pdc,cei,flo,gco&stcs=XU100.I.BIST~XU050.I.BIST~XU030.I.BIST~USD/TRL~EUR/TRL~EUR/USD~XAU/USD~XGLD~BRENT")
-    suspend fun getRequestList(): Response<StockRequestData>
-    */
 
     @GET("ForeksMobileInterview")
     suspend fun getRequestList(

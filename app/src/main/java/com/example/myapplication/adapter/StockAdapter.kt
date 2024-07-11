@@ -17,7 +17,8 @@ class StockAdapter(private val stockList: List<StockListDetail>, private val sto
     }
 
     override fun getItemCount(): Int {
-        return stockList.size    }
+        return stockList.size
+    }
 
     override fun onBindViewHolder(holder: StockViewHolder, position: Int) {
         val currentStock = stockList[position]

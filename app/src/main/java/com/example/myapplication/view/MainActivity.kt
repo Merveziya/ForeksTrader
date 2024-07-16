@@ -10,6 +10,7 @@ import com.example.myapplication.databinding.ActivityMainBinding
 import com.example.myapplication.model.service.ApiInterface
 import com.example.myapplication.viewmodel.MainViewModel
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.MutableStateFlow
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -26,19 +27,14 @@ class MainActivity : AppCompatActivity() {
 
         binding.recyclerView.layoutManager = LinearLayoutManager(this)
 
-        viewModel.uiState.observe(this, Observer { state ->
-            state.mypageDefaults?.let { stocks ->
-                val stockList = stocks
+        viewModel.uiStateCombined.observe(this, Observer { (stocksResponse, stockRequest) ->
+            val stockList = stocksResponse?.mypageDefaults
+            val fields = stockRequest?.fields
 
-                viewModel.uiStatee.observe(this, Observer { responseState ->
-                    responseState.fields?.let { fields ->
-                        val stockRequest = fields
-                        val adapter = StockAdapter(stockList, stockRequest)
-                        binding.recyclerView.adapter = adapter
-                    }
-                })
+            if (stockList != null && fields != null) {
+                val adapter = StockAdapter(stockList, fields,viewModel)
+                binding.recyclerView.adapter = adapter
             }
         })
-
     }
 }

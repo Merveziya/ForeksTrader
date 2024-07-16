@@ -23,3 +23,5 @@ data class StockRequestData(
     @SerializedName("z") val z: Int = 0,
 )
 
+
+

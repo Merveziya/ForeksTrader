@@ -11,12 +11,16 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object ViewModelModule {
-    /*
-    @Binds
-    */
+
     @Singleton
     @Provides
     fun provideRetrofitService(): ApiInterface {
         return RetrofitServiceInstance.getInstance().create(ApiInterface::class.java)
+    }
+
+    @Singleton
+    @Provides
+    fun providePreviousLasValue(): String {
+        return ""
     }
 }

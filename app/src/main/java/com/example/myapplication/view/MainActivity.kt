@@ -42,6 +42,8 @@ class MainActivity : AppCompatActivity() {
         binding.firstAutoCompleteTextView.setAdapter(arrayAdapter)
         binding.lastAutoCompleteTextView.setAdapter(arrayAdapter)
 
+
+        //tıklandığında seçilen alanı kaydediyor
         binding.firstAutoCompleteTextView.setOnItemClickListener { _, _, position, _ ->
             lasValue = dropdownKeyList.getOrNull(position) ?: "las"
         }
@@ -50,12 +52,13 @@ class MainActivity : AppCompatActivity() {
             pddValue = dropdownKeyList.getOrNull(position) ?: "las"
         }
 
-        viewModel.uiStateCombined.observe(this, Observer { (stocksResponse, stockRequest) ->
+        viewModel.combinedLiveData.observe(this, Observer { (stocksResponse, mainResponseData) ->
             val stockList = stocksResponse?.mypageDefaults
-            val fields = stockRequest?.fields
+            val currentFields = mainResponseData.currentResponseData.fields
+            val oldFields = mainResponseData.oldStocklistResponseData.fields
 
-            if (stockList != null && fields != null) {
-                val adapter = StockAdapter(stockList, fields,viewModel)
+            if (stockList != null && currentFields != null && oldFields != null) {
+                val adapter = StockAdapter(stockList, currentFields, oldFields)
                 binding.recyclerView.adapter = adapter
             }
         })

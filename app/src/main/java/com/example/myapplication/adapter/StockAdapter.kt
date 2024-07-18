@@ -11,8 +11,10 @@ import com.example.myapplication.databinding.ItemStockBinding
 import com.example.myapplication.model.Fields
 import com.example.myapplication.model.StockListDetail
 import com.example.myapplication.viewmodel.MainViewModel
+import com.example.myapplication.viewmodel.convertTurkishDouble
 
-class StockAdapter(private val stockList: List<StockListDetail>, private val stockRequest: List<Fields> , private val viewModel: MainViewModel) : RecyclerView.Adapter<StockAdapter.StockViewHolder>() {
+class StockAdapter(private val stockList: List<StockListDetail>, private val stockRequest: List<Fields> , private val oldStockResponse: List<Fields>,
+) : RecyclerView.Adapter<StockAdapter.StockViewHolder>() {
 
     class StockViewHolder(val binding: ItemStockBinding) : RecyclerView.ViewHolder(binding.root)
 
@@ -28,6 +30,7 @@ class StockAdapter(private val stockList: List<StockListDetail>, private val sto
     override fun onBindViewHolder(holder: StockViewHolder, position: Int) {
         val currentStock = stockList[position]
         val field = stockRequest.getOrNull(position)
+        val oldField = oldStockResponse.getOrNull(position)
 
         holder.binding.apply {
             name.text = currentStock.cod
@@ -35,12 +38,12 @@ class StockAdapter(private val stockList: List<StockListDetail>, private val sto
             leftHeaderValue.text = field?.las ?: "null"
 
             val pddString = field?.pdd ?: "0"
-            val pddValue = pddString.replace(",", ".").toDoubleOrNull() ?: 0.0
+            val pddValue = pddString.convertTurkishDouble() ?: 0.0
             rightHeaderValue.text = pddValue.toString()
             setTextColor(rightHeaderValue, pddValue)
 
-            val previousValue = viewModel.getPreviousLasValue(position)
-            val currentValue = field?.las?.replace(",", ".")?.toDoubleOrNull()
+            val previousValue = oldField?.las?.convertTurkishDouble()
+            val currentValue = field?.las?.convertTurkishDouble()
 
             val direction = ValueDirection.getByValues(currentValue, previousValue)
             updateBackgroundColor(indicator, direction)

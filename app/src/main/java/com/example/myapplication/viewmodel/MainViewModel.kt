@@ -5,6 +5,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
+import com.example.myapplication.model.MainResponseData
 import com.example.myapplication.model.StockListResponseData
 import com.example.myapplication.model.StockResponseData
 import com.example.myapplication.model.service.ApiInterface
@@ -23,15 +24,14 @@ class MainViewModel @Inject constructor(
     private val apiInterface: ApiInterface,
 ) : ViewModel() {
     private val stockListMutableResponse = MutableStateFlow(StockListResponseData())
-    private val uiStateMutableResponse = MutableStateFlow(StockResponseData())
-    private val previousLasValues = mutableListOf<String>()
+
+    private var mainMutableResponse = MutableStateFlow(MainResponseData(StockResponseData(), StockResponseData()))
 
     private val combinedStateFlow =
-        stockListMutableResponse.combine(uiStateMutableResponse) { stockListResponse, stockRequest ->
-            Pair(stockListResponse, stockRequest)
-        }
+        stockListMutableResponse.combine(mainMutableResponse) { stockListResponse, mainResponseData ->
+            Pair(stockListResponse, mainResponseData) }
 
-    val uiStateCombined: LiveData<Pair<StockListResponseData, StockResponseData>> =
+    val combinedLiveData: LiveData<Pair<StockListResponseData, MainResponseData>> =
         combinedStateFlow.asLiveData()
 
     init {
@@ -87,14 +87,12 @@ class MainViewModel @Inject constructor(
 
                 if (response.isSuccessful) {
                     val stockResponseData = response.body() ?: StockResponseData()
-                    val fieldsValue = stockResponseData?.fields?.firstOrNull()
-                    val currentLasValue = fieldsValue?.las
 
-                    stockResponseData.fields?.forEach { fields ->
-                        previousLasValues.add(fields.las ?: "0.0")
-                    }
+                    val oldData = mainMutableResponse.value.copy(
+                        oldStocklistResponseData = mainMutableResponse.value.currentResponseData.copy()
+                    )
 
-                    uiStateMutableResponse.value = stockResponseData
+                    mainMutableResponse.value = MainResponseData(stockResponseData, oldData.oldStocklistResponseData)
 
                 } else {
                     Log.e(
@@ -108,14 +106,6 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    fun getPreviousLasValue(position: Int): Double {
-           return previousLasValues[position].convertTurkishDouble() ?: 0.0
-    }
-
-    fun String.convertTurkishDouble(): Double? { val sanitizedString = this.replace(".", "")
-        val formattedString = sanitizedString.replace(",", ".")
-        return formattedString.toDoubleOrNull() }
-
     private fun updateResponseData(timeRange:Long, action: suspend() -> Unit) {
         viewModelScope.launch{
             while(isActive){
@@ -126,6 +116,8 @@ class MainViewModel @Inject constructor(
     }
 }
 
-
+fun String.convertTurkishDouble(): Double? { val sanitizedString = this.replace(".", "")
+    val formattedString = sanitizedString.replace(",", ".")
+    return formattedString.toDoubleOrNull() }
 
 

@@ -6,12 +6,14 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
 import com.example.myapplication.model.StockListResponseData
-import com.example.myapplication.model.StockRequestData
+import com.example.myapplication.model.StockResponseData
 import com.example.myapplication.model.service.ApiInterface
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
@@ -20,35 +22,40 @@ import javax.inject.Inject
 class MainViewModel @Inject constructor(
     private val apiInterface: ApiInterface,
 ) : ViewModel() {
-    private val uiStateMutableResponse = MutableStateFlow(StockListResponseData())
-    private val uiStateMutableRequest = MutableStateFlow(StockRequestData())
+    private val stockListMutableResponse = MutableStateFlow(StockListResponseData())
+    private val uiStateMutableResponse = MutableStateFlow(StockResponseData())
     private val previousLasValues = mutableListOf<String>()
 
     private val combinedStateFlow =
-        uiStateMutableResponse.combine(uiStateMutableRequest) { stockListResponse, stockRequest ->
+        stockListMutableResponse.combine(uiStateMutableResponse) { stockListResponse, stockRequest ->
             Pair(stockListResponse, stockRequest)
         }
 
-    val uiStateCombined: LiveData<Pair<StockListResponseData, StockRequestData>> =
+    val uiStateCombined: LiveData<Pair<StockListResponseData, StockResponseData>> =
         combinedStateFlow.asLiveData()
 
-
     init {
-        viewModelScope.launch {
-            val responseValue = getStockList()
-            if (responseValue != null) {
-                val stcsList = responseValue.mypageDefaults?.map {
-                    it.tke
-                }
-                var codeString = ""
-                stcsList?.let { list ->
-                    list.forEach {
-                        codeString = codeString + it + "~"
-                    }
-                }
-                getRequestList("pdd,las", codeString)
-            }
-        }
+       updateResponseData(1000L){
+         viewModelScope.launch {
+             val responseValue = getStockList()
+             if (responseValue != null) {
+                 val stcsList = responseValue.mypageDefaults?.map {
+                     it.tke
+                 }
+                 var codeString = ""
+                 stcsList?.let { list ->
+                     list.forEach {
+                         codeString = codeString + it + "~"
+                     }
+                 }
+                 getResponseList("pdd,las", codeString)
+             }
+
+             if(responseValue != null){
+
+             }
+         }
+       }
     }
 
     //Senkronize olması için suspend kullanıldı
@@ -57,7 +64,7 @@ class MainViewModel @Inject constructor(
             val response = apiInterface.getStockList()
             if (response.isSuccessful) {
                 val stockListResponseData = response.body() ?: StockListResponseData()
-                uiStateMutableResponse.value = stockListResponseData
+                stockListMutableResponse.value = stockListResponseData
                 return@withContext stockListResponseData
             } else {
                 Log.e(
@@ -73,21 +80,21 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    fun getRequestList(fields: String, stcs: String) {
+    fun getResponseList(fields: String, stcs: String) {
         viewModelScope.launch {
             try {
                 val response = apiInterface.getRequestList(fields, stcs)
 
                 if (response.isSuccessful) {
-                    val stockRequestData = response.body() ?: StockRequestData()
-                    val fieldsValue = stockRequestData?.fields?.firstOrNull()
+                    val stockResponseData = response.body() ?: StockResponseData()
+                    val fieldsValue = stockResponseData?.fields?.firstOrNull()
                     val currentLasValue = fieldsValue?.las
 
-                    stockRequestData.fields?.forEach { fields ->
+                    stockResponseData.fields?.forEach { fields ->
                         previousLasValues.add(fields.las ?: "0.0")
                     }
 
-                    uiStateMutableRequest.value = stockRequestData
+                    uiStateMutableResponse.value = stockResponseData
 
                 } else {
                     Log.e(
@@ -108,6 +115,15 @@ class MainViewModel @Inject constructor(
     fun String.convertTurkishDouble(): Double? { val sanitizedString = this.replace(".", "")
         val formattedString = sanitizedString.replace(",", ".")
         return formattedString.toDoubleOrNull() }
+
+    private fun updateResponseData(timeRange:Long, action: suspend() -> Unit) {
+        viewModelScope.launch{
+            while(isActive){
+                action()
+                delay(timeRange)
+            }
+        }
+    }
 }
 
 

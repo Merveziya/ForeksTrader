@@ -18,10 +18,13 @@ data class Fields(
     val clo: String?,
 )
 
-data class StockRequestData(
+data class StockResponseData(
     @SerializedName("l") val fields: List<Fields>? = null,
     @SerializedName("z") val z: Int = 0,
 )
 
-
+data class MainResponseData(
+    var currentResponseData:StockResponseData,
+    var oldStocklistResponseData:StockResponseData
+)
 

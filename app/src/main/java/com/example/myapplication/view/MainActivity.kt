@@ -5,6 +5,7 @@ import android.widget.ArrayAdapter
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Observer
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.myapplication.R
 import com.example.myapplication.adapter.StockAdapter
@@ -12,8 +13,9 @@ import com.example.myapplication.databinding.ActivityMainBinding
 import com.example.myapplication.model.service.ApiInterface
 import com.example.myapplication.viewmodel.MainViewModel
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.launch
 import javax.inject.Inject
+
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
@@ -27,6 +29,18 @@ class MainActivity : AppCompatActivity() {
 
     private var dropdownNameList = arrayListOf<String>()
     private var dropdownKeyList = arrayListOf<String>()
+
+    override fun onPause() {
+        super.onPause()
+        viewModel.onActivityStopped()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        lifecycleScope.launch {
+            viewModel.updateResponseData(this,1000L)
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -42,10 +56,10 @@ class MainActivity : AppCompatActivity() {
         binding.firstAutoCompleteTextView.setAdapter(arrayAdapter)
         binding.lastAutoCompleteTextView.setAdapter(arrayAdapter)
 
-
         //tıklandığında seçilen alanı kaydediyor
         binding.firstAutoCompleteTextView.setOnItemClickListener { _, _, position, _ ->
             lasValue = dropdownKeyList.getOrNull(position) ?: "las"
+            //viewModel.sortByFieldCode(lasValue)
         }
 
         binding.lastAutoCompleteTextView.setOnItemClickListener { _, _, position, _ ->
@@ -62,5 +76,6 @@ class MainActivity : AppCompatActivity() {
                 binding.recyclerView.adapter = adapter
             }
         })
+
     }
 }

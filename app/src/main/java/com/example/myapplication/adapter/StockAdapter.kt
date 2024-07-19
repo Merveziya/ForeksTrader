@@ -4,13 +4,13 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.annotation.ColorRes
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.example.myapplication.R
 import com.example.myapplication.databinding.ItemStockBinding
 import com.example.myapplication.model.Fields
 import com.example.myapplication.model.StockListDetail
-import com.example.myapplication.viewmodel.MainViewModel
 import com.example.myapplication.viewmodel.convertTurkishDouble
 
 class StockAdapter(private val stockList: List<StockListDetail>, private val stockRequest: List<Fields> , private val oldStockResponse: List<Fields>,
@@ -45,8 +45,12 @@ class StockAdapter(private val stockList: List<StockListDetail>, private val sto
             val previousValue = oldField?.las?.convertTurkishDouble()
             val currentValue = field?.las?.convertTurkishDouble()
 
+            val currentClo = field?.clo
+            val previousClo = oldField?.clo
+
             val direction = ValueDirection.getByValues(currentValue, previousValue)
             updateBackgroundColor(indicator, direction)
+            highlightedClockValue(recyclerviewItem,currentClo,previousClo)
         }
     }
 }
@@ -65,6 +69,22 @@ enum class ValueDirection {
                 return NEUTRAL
             }
         }
+    }
+}
+
+
+fun highlightedClockValue(constraintLayout: ConstraintLayout, currentClo:String?, previousClo:String?){
+
+    if(currentClo != previousClo){
+        constraintLayout.setBackgroundColor(
+            ContextCompat.getColor(constraintLayout.context, R.color.transparentGray)
+        )
+    }
+
+    else {
+        constraintLayout.setBackgroundColor(
+            ContextCompat.getColor(constraintLayout.context, R.color.white)
+        )
     }
 }
 

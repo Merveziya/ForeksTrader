@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">My Application</string>
     <string-array name="criterion">
-        <item>Son</item>
+        <item> Son</item>
         <item>%Fark</item>
         <item>Düşük</item>
         <item>Yüksek</item>

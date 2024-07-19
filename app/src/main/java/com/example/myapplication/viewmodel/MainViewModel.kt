@@ -10,7 +10,9 @@ import com.example.myapplication.model.StockListResponseData
 import com.example.myapplication.model.StockResponseData
 import com.example.myapplication.model.service.ApiInterface
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
@@ -24,39 +26,21 @@ class MainViewModel @Inject constructor(
     private val apiInterface: ApiInterface,
 ) : ViewModel() {
     private val stockListMutableResponse = MutableStateFlow(StockListResponseData())
-
-    private var mainMutableResponse = MutableStateFlow(MainResponseData(StockResponseData(), StockResponseData()))
+    private var mainMutableResponse =
+        MutableStateFlow(MainResponseData(StockResponseData(), StockResponseData()))
 
     private val combinedStateFlow =
         stockListMutableResponse.combine(mainMutableResponse) { stockListResponse, mainResponseData ->
-            Pair(stockListResponse, mainResponseData) }
+            Pair(stockListResponse, mainResponseData)
+        }
 
     val combinedLiveData: LiveData<Pair<StockListResponseData, MainResponseData>> =
         combinedStateFlow.asLiveData()
 
-    init {
-       updateResponseData(1000L){
-         viewModelScope.launch {
-             val responseValue = getStockList()
-             if (responseValue != null) {
-                 val stcsList = responseValue.mypageDefaults?.map {
-                     it.tke
-                 }
-                 var codeString = ""
-                 stcsList?.let { list ->
-                     list.forEach {
-                         codeString = codeString + it + "~"
-                     }
-                 }
-                 getResponseList("pdd,las", codeString)
-             }
+    private var jobCoroutines:Job ?= null
 
-             if(responseValue != null){
+    private var firstColumnSortType:SortColumnValue ?= null
 
-             }
-         }
-       }
-    }
 
     //Senkronize olması için suspend kullanıldı
     suspend fun getStockList() = withContext(Dispatchers.IO) {
@@ -88,16 +72,29 @@ class MainViewModel @Inject constructor(
                 if (response.isSuccessful) {
                     val stockResponseData = response.body() ?: StockResponseData()
 
-                    val oldData = mainMutableResponse.value.copy(
-                        oldStocklistResponseData = mainMutableResponse.value.currentResponseData.copy()
-                    )
+                    mainMutableResponse.value.oldStocklistResponseData =
+                        mainMutableResponse.value.currentResponseData
+                    val oldData = mainMutableResponse.value.oldStocklistResponseData
+                    mainMutableResponse.value = MainResponseData(stockResponseData, oldData)
+                    Log.e("lala","lala")
 
-                    mainMutableResponse.value = MainResponseData(stockResponseData, oldData.oldStocklistResponseData)
 
+                    /*
+                    stockResponseData.fields?.let { fields ->
+                        when(SortColumnValue.sortOrder()) {
+                            SortColumnValue.ASCENDING -> fields.sortedBy {
+                                it.las
+                            }
+                            SortColumnValue.DESCENDING -> fields.sortedByDescending {
+                                it.las
+                            }
+                        }
+                    }
+*/
                 } else {
                     Log.e(
                         "MainViewModel",
-                        "Error fetching request list: ${response.errorBody()?.string()}"
+                        "Error fetching request listttt: ${response.errorBody()?.string()}"
                     )
                 }
             } catch (e: Exception) {
@@ -106,18 +103,47 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    private fun updateResponseData(timeRange:Long, action: suspend() -> Unit) {
-        viewModelScope.launch{
-            while(isActive){
-                action()
+
+    fun onActivityStopped(){
+        jobCoroutines?.cancel()
+    }
+
+    fun updateResponseData(coroutineScope: CoroutineScope, timeRange: Long) {
+        jobCoroutines = coroutineScope.launch {
+            while (isActive) {
+                val responseValue = getStockList()
+                if (responseValue != null) {
+                    val stcsList = responseValue.mypageDefaults?.map {
+                        it.tke
+                    }
+                    var codeString = ""
+                    stcsList?.let { list ->
+                        list.forEach {
+                            codeString = codeString + it + "~"
+                        }
+                    }
+                    getResponseList("pdd,las", codeString)
+                }
                 delay(timeRange)
             }
+
         }
     }
 }
 
 fun String.convertTurkishDouble(): Double? { val sanitizedString = this.replace(".", "")
     val formattedString = sanitizedString.replace(",", ".")
-    return formattedString.toDoubleOrNull() }
+    return formattedString.toDoubleOrNull()
+}
+
+
+enum class SortColumnValue{
+    ASCENDING,DESCENDING;
+    companion object{
+        fun sortOrder(column: String){
+
+        }
+    }
+}
 
 

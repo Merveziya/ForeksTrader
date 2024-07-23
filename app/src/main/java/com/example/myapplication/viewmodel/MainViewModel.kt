@@ -5,6 +5,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
+import com.example.myapplication.adapter.SortColumnValue
 import com.example.myapplication.model.MainResponseData
 import com.example.myapplication.model.StockListResponseData
 import com.example.myapplication.model.StockResponseData
@@ -26,23 +27,17 @@ class MainViewModel @Inject constructor(
     private val apiInterface: ApiInterface,
 ) : ViewModel() {
     private val stockListMutableResponse = MutableStateFlow(StockListResponseData())
-    private var mainMutableResponse =
-        MutableStateFlow(MainResponseData(StockResponseData(), StockResponseData()))
-
-    private val combinedStateFlow =
-        stockListMutableResponse.combine(mainMutableResponse) { stockListResponse, mainResponseData ->
-            Pair(stockListResponse, mainResponseData)
-        }
-
-    val combinedLiveData: LiveData<Pair<StockListResponseData, MainResponseData>> =
-        combinedStateFlow.asLiveData()
-
-    private var jobCoroutines:Job ?= null
-
-    private var firstColumnSortType:SortColumnValue ?= null
+    private var mainMutableResponse = MutableStateFlow(MainResponseData(StockResponseData(), StockResponseData()))
 
 
-    //Senkronize olması için suspend kullanıldı
+    private val combinedStateFlow = stockListMutableResponse.combine(mainMutableResponse) { stockListResponse, mainResponseData ->
+        Pair(stockListResponse, mainResponseData)
+    }
+
+    val combinedLiveData: LiveData<Pair<StockListResponseData, MainResponseData>> = combinedStateFlow.asLiveData()
+
+    private var jobCoroutines: Job? = null
+
     suspend fun getStockList() = withContext(Dispatchers.IO) {
         try {
             val response = apiInterface.getStockList()
@@ -51,16 +46,12 @@ class MainViewModel @Inject constructor(
                 stockListMutableResponse.value = stockListResponseData
                 return@withContext stockListResponseData
             } else {
-                Log.e(
-                    "MainViewModel",
-                    "Error fetching stock list: ${response.errorBody()?.string()}"
-                )
+                Log.e("MainViewModel", "Error fetching stock list: ${response.errorBody()?.string()}")
                 return@withContext null
             }
         } catch (e: Exception) {
             Log.e("MainViewModel", "Error fetching stock list", e)
             return@withContext null
-
         }
     }
 
@@ -68,34 +59,13 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val response = apiInterface.getRequestList(fields, stcs)
-
                 if (response.isSuccessful) {
                     val stockResponseData = response.body() ?: StockResponseData()
-
-                    mainMutableResponse.value.oldStocklistResponseData =
-                        mainMutableResponse.value.currentResponseData
+                    mainMutableResponse.value.oldStocklistResponseData = mainMutableResponse.value.currentResponseData
                     val oldData = mainMutableResponse.value.oldStocklistResponseData
                     mainMutableResponse.value = MainResponseData(stockResponseData, oldData)
-                    Log.e("lala","lala")
-
-
-                    /*
-                    stockResponseData.fields?.let { fields ->
-                        when(SortColumnValue.sortOrder()) {
-                            SortColumnValue.ASCENDING -> fields.sortedBy {
-                                it.las
-                            }
-                            SortColumnValue.DESCENDING -> fields.sortedByDescending {
-                                it.las
-                            }
-                        }
-                    }
-*/
                 } else {
-                    Log.e(
-                        "MainViewModel",
-                        "Error fetching request listttt: ${response.errorBody()?.string()}"
-                    )
+                    Log.e("MainViewModel", "Error fetching request list: ${response.errorBody()?.string()}")
                 }
             } catch (e: Exception) {
                 Log.e("MainViewModel", "Error fetching request list", e)
@@ -103,8 +73,7 @@ class MainViewModel @Inject constructor(
         }
     }
 
-
-    fun onActivityStopped(){
+    fun onActivityStopped() {
         jobCoroutines?.cancel()
     }
 
@@ -113,37 +82,25 @@ class MainViewModel @Inject constructor(
             while (isActive) {
                 val responseValue = getStockList()
                 if (responseValue != null) {
-                    val stcsList = responseValue.mypageDefaults?.map {
-                        it.tke
-                    }
+                    val stcsList = responseValue.mypageDefaults?.map { it.tke }
                     var codeString = ""
                     stcsList?.let { list ->
-                        list.forEach {
-                            codeString = codeString + it + "~"
-                        }
+                        list.forEach { codeString += "$it~" }
                     }
                     getResponseList("pdd,las", codeString)
                 }
                 delay(timeRange)
             }
-
         }
     }
+
+
 }
 
-fun String.convertTurkishDouble(): Double? { val sanitizedString = this.replace(".", "")
+fun String.convertTurkishDouble(): Double? {
+    val sanitizedString = this.replace(".", "")
     val formattedString = sanitizedString.replace(",", ".")
     return formattedString.toDoubleOrNull()
-}
-
-
-enum class SortColumnValue{
-    ASCENDING,DESCENDING;
-    companion object{
-        fun sortOrder(column: String){
-
-        }
-    }
 }
 
 

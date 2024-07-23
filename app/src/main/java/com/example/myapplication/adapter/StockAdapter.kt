@@ -13,8 +13,14 @@ import com.example.myapplication.model.Fields
 import com.example.myapplication.model.StockListDetail
 import com.example.myapplication.viewmodel.convertTurkishDouble
 
-class StockAdapter(private val stockList: List<StockListDetail>, private val stockRequest: List<Fields> , private val oldStockResponse: List<Fields>,
+
+class StockAdapter(
+    private var sortType: SortColumnValue = SortColumnValue.CURRENTSORT
 ) : RecyclerView.Adapter<StockAdapter.StockViewHolder>() {
+
+    private var stockListObject = mutableListOf<StockListDetail>()
+    private var oldStockResponseObject = mutableListOf<Fields>()
+    private var stockResponseObject = mutableListOf<Fields>()
 
     class StockViewHolder(val binding: ItemStockBinding) : RecyclerView.ViewHolder(binding.root)
 
@@ -24,13 +30,13 @@ class StockAdapter(private val stockList: List<StockListDetail>, private val sto
     }
 
     override fun getItemCount(): Int {
-        return stockList.size
+        return stockListObject.size
     }
 
     override fun onBindViewHolder(holder: StockViewHolder, position: Int) {
-        val currentStock = stockList[position]
-        val field = stockRequest.getOrNull(position)
-        val oldField = oldStockResponse.getOrNull(position)
+        val currentStock = stockListObject[position]
+        val field = stockResponseObject.getOrNull(position)
+        val oldField = oldStockResponseObject.getOrNull(position)
 
         holder.binding.apply {
             name.text = currentStock.cod
@@ -50,12 +56,43 @@ class StockAdapter(private val stockList: List<StockListDetail>, private val sto
 
             val direction = ValueDirection.getByValues(currentValue, previousValue)
             updateBackgroundColor(indicator, direction)
-            highlightedClockValue(recyclerviewItem,currentClo,previousClo)
+            if (currentClo != previousClo) {
+                highlightedClockValue(recyclerviewItem, currentClo, previousClo)
+            }
         }
+    }
+
+    fun update(stockList: List<StockListDetail>, stockResponse: List<Fields>, oldStockResponse: List<Fields>, sortType: SortColumnValue) {
+        this.sortType = sortType
+        stockListObject.clearAndReplace(stockList)
+        stockResponseObject.clearAndReplace(stockResponse)
+        oldStockResponseObject.clearAndReplace(oldStockResponse)
+
+        val combinedList = stockResponseObject.zip(stockListObject)
+
+        val sortedCombinedList = when (sortType) {
+            SortColumnValue.ASCENDING -> combinedList.sortedBy {
+                it.first.las?.convertTurkishDouble()
+            }
+            SortColumnValue.DESCENDING -> combinedList.sortedByDescending {
+                it.first.las?.convertTurkishDouble()
+            }
+            SortColumnValue.CURRENTSORT -> combinedList
+        }
+        stockResponseObject.clearAndReplace(sortedCombinedList.map {
+            it.first
+        })
+        stockListObject.clearAndReplace(sortedCombinedList.map {
+            it.second
+        })
+        notifyDataSetChanged()
     }
 }
 
-
+ fun <T> MutableList<T>.clearAndReplace(list: List<T>?) {
+     clear()
+     list?.let { addAll(it) }
+ }
 enum class ValueDirection {
     POSITIVE, NEGATIVE, NEUTRAL;
 
@@ -125,4 +162,8 @@ fun updateBackgroundColor(textView: TextView, valueDirection: ValueDirection) {
         }
 
     }
+}
+
+enum class SortColumnValue {
+    ASCENDING, DESCENDING, CURRENTSORT;
 }

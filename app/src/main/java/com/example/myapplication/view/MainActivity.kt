@@ -8,6 +8,7 @@ import androidx.lifecycle.Observer
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.myapplication.R
+import com.example.myapplication.adapter.SortColumnValue
 import com.example.myapplication.adapter.StockAdapter
 import com.example.myapplication.databinding.ActivityMainBinding
 import com.example.myapplication.model.service.ApiInterface
@@ -16,7 +17,6 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
     @Inject
@@ -24,11 +24,11 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private val viewModel: MainViewModel by viewModels()
 
-    private var pddValue = "pdd"
-    private var lasValue = "las"
+    private lateinit var adapter: StockAdapter
+
+    private var isSorting = false
 
     private var dropdownNameList = arrayListOf<String>()
-    private var dropdownKeyList = arrayListOf<String>()
 
     override fun onPause() {
         super.onPause()
@@ -38,7 +38,7 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         lifecycleScope.launch {
-            viewModel.updateResponseData(this,1000L)
+            viewModel.updateResponseData(this, 1000L)
         }
     }
 
@@ -52,30 +52,69 @@ class MainActivity : AppCompatActivity() {
         val criterion = resources.getStringArray(R.array.criterion)
         dropdownNameList.addAll(criterion)
 
-        val arrayAdapter = ArrayAdapter(this,R.layout.dropdown_item,dropdownNameList)
+        val arrayAdapter = ArrayAdapter(this, R.layout.dropdown_item, dropdownNameList)
         binding.firstAutoCompleteTextView.setAdapter(arrayAdapter)
         binding.lastAutoCompleteTextView.setAdapter(arrayAdapter)
 
-        //tıklandığında seçilen alanı kaydediyor
+        // Adapter setlendi
+        adapter = StockAdapter()
+        binding.recyclerView.adapter = adapter
+
         binding.firstAutoCompleteTextView.setOnItemClickListener { _, _, position, _ ->
-            lasValue = dropdownKeyList.getOrNull(position) ?: "las"
-            //viewModel.sortByFieldCode(lasValue)
+            val selectedCriterion = criterion[position]
+            val sortOrder = when (selectedCriterion) {
+                "Yüksek" -> SortColumnValue.ASCENDING
+                "Düşük" -> SortColumnValue.DESCENDING
+                else -> SortColumnValue.CURRENTSORT
+            }
+
+            sortOrder?.let {
+                isSorting = true
+                viewModel.combinedLiveData.observe(this@MainActivity, Observer { (stocksResponse, mainResponseData) ->
+                    val stockList = stocksResponse?.mypageDefaults
+                    val currentFields = mainResponseData.currentResponseData.fields
+                    val oldFields = mainResponseData.oldStocklistResponseData.fields
+
+                    if (stockList != null && currentFields != null && oldFields != null) {
+                        adapter.update(stockList, currentFields, oldFields, sortOrder)
+                    }
+                })
+            }
         }
 
+
         binding.lastAutoCompleteTextView.setOnItemClickListener { _, _, position, _ ->
-            pddValue = dropdownKeyList.getOrNull(position) ?: "las"
+               val selectedCriterion = criterion[position]
+               val sortOrder = when(selectedCriterion){
+                   "Yüksek" -> SortColumnValue.ASCENDING
+                   "Düşük"  -> SortColumnValue.DESCENDING
+                   else -> SortColumnValue.CURRENTSORT
+               }
+
+            sortOrder?.let {
+                isSorting = true
+                viewModel.combinedLiveData.observe(this@MainActivity, Observer { (stocksResponse, mainResponseData) ->
+                    val stockList = stocksResponse?.mypageDefaults
+                    val currentFields = mainResponseData.currentResponseData.fields
+                    val oldFields = mainResponseData.oldStocklistResponseData.fields
+
+                    if (stockList != null && currentFields != null && oldFields != null) {
+                        adapter.update(stockList, currentFields, oldFields, sortOrder)
+                    }
+                })
+            }
         }
 
         viewModel.combinedLiveData.observe(this, Observer { (stocksResponse, mainResponseData) ->
-            val stockList = stocksResponse?.mypageDefaults
-            val currentFields = mainResponseData.currentResponseData.fields
-            val oldFields = mainResponseData.oldStocklistResponseData.fields
 
-            if (stockList != null && currentFields != null && oldFields != null) {
-                val adapter = StockAdapter(stockList, currentFields, oldFields)
-                binding.recyclerView.adapter = adapter
-            }
+                val stockList = stocksResponse?.mypageDefaults
+                val currentFields = mainResponseData.currentResponseData.fields
+                val oldFields = mainResponseData.oldStocklistResponseData.fields
+
+                if (stockList != null && currentFields != null && oldFields != null) {
+                    adapter.update(stockList, currentFields, oldFields, SortColumnValue.CURRENTSORT)
+                }
+
         })
-
     }
 }

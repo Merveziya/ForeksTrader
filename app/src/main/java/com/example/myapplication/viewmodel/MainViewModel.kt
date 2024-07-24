@@ -26,17 +26,14 @@ import javax.inject.Inject
 class MainViewModel @Inject constructor(
     private val apiInterface: ApiInterface,
 ) : ViewModel() {
-    private val stockListMutableResponse = MutableStateFlow(StockListResponseData())
     private var mainMutableResponse = MutableStateFlow(MainResponseData(StockResponseData(), StockResponseData()))
-
-
+    private var jobCoroutines: Job? = null
+    private val stockListMutableResponse = MutableStateFlow(StockListResponseData())
     private val combinedStateFlow = stockListMutableResponse.combine(mainMutableResponse) { stockListResponse, mainResponseData ->
         Pair(stockListResponse, mainResponseData)
     }
-
-    val combinedLiveData: LiveData<Pair<StockListResponseData, MainResponseData>> = combinedStateFlow.asLiveData()
-
-    private var jobCoroutines: Job? = null
+    private val combinedLiveData: LiveData<Pair<StockListResponseData, MainResponseData>> = combinedStateFlow.asLiveData()
+    val _combinedLiveData = combinedLiveData
 
     suspend fun getStockList() = withContext(Dispatchers.IO) {
         try {

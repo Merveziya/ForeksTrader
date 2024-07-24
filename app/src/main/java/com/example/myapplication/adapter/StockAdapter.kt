@@ -40,12 +40,12 @@ class StockAdapter(
 
         holder.binding.apply {
             name.text = currentStock.cod
-            lastUpdateTime.text = field?.clo ?: "null"
-            leftHeaderValue.text = field?.las ?: "null"
+            lastUpdateTime.text = field?.clo ?: "-"
+            leftHeaderValue.text = field?.las ?: "-"
 
-            val pddString = field?.pdd ?: "0"
+            val pddString = field?.pdd ?: "-"
             val pddValue = pddString.convertTurkishDouble() ?: 0.0
-            rightHeaderValue.text = pddValue.toString()
+            rightHeaderValue.text = "%$pddValue"
             setTextColor(rightHeaderValue, pddValue)
 
             val previousValue = oldField?.las?.convertTurkishDouble()
@@ -56,9 +56,8 @@ class StockAdapter(
 
             val direction = ValueDirection.getByValues(currentValue, previousValue)
             updateBackgroundColor(indicator, direction)
-            if (currentClo != previousClo) {
-                highlightedClockValue(recyclerviewItem, currentClo, previousClo)
-            }
+
+            highlightedClockValue(recyclerviewItem, currentClo, previousClo)
         }
     }
 
@@ -77,6 +76,9 @@ class StockAdapter(
             SortColumnValue.DESCENDING -> combinedList.sortedByDescending {
                 it.first.las?.convertTurkishDouble()
             }
+            SortColumnValue.DIFFERENCE -> combinedList.sortedBy {
+                it.first.pdd?.convertTurkishDouble()
+            }
             SortColumnValue.CURRENTSORT -> combinedList
         }
         stockResponseObject.clearAndReplace(sortedCombinedList.map {
@@ -93,6 +95,8 @@ class StockAdapter(
      clear()
      list?.let { addAll(it) }
  }
+
+
 enum class ValueDirection {
     POSITIVE, NEGATIVE, NEUTRAL;
 
@@ -165,5 +169,5 @@ fun updateBackgroundColor(textView: TextView, valueDirection: ValueDirection) {
 }
 
 enum class SortColumnValue {
-    ASCENDING, DESCENDING, CURRENTSORT;
+    ASCENDING, DESCENDING, CURRENTSORT, DIFFERENCE;
 }

@@ -21,14 +21,12 @@ import javax.inject.Inject
 class MainActivity : AppCompatActivity() {
     @Inject
     lateinit var apiInterface: ApiInterface
-    private lateinit var binding: ActivityMainBinding
-    private val viewModel: MainViewModel by viewModels()
-
-    private lateinit var adapter: StockAdapter
 
     private var isSorting = false
-
     private var dropdownNameList = arrayListOf<String>()
+    private lateinit var binding: ActivityMainBinding
+    private lateinit var adapter: StockAdapter
+    private val viewModel: MainViewModel by viewModels()
 
     override fun onPause() {
         super.onPause()
@@ -63,14 +61,15 @@ class MainActivity : AppCompatActivity() {
         binding.firstAutoCompleteTextView.setOnItemClickListener { _, _, position, _ ->
             val selectedCriterion = criterion[position]
             val sortOrder = when (selectedCriterion) {
-                "Yüksek" -> SortColumnValue.ASCENDING
-                "Düşük" -> SortColumnValue.DESCENDING
+                "Yüksek" -> SortColumnValue.DESCENDING
+                "Düşük" -> SortColumnValue.ASCENDING
+                "%Fark" -> SortColumnValue.DIFFERENCE
                 else -> SortColumnValue.CURRENTSORT
             }
 
             sortOrder?.let {
                 isSorting = true
-                viewModel.combinedLiveData.observe(this@MainActivity, Observer { (stocksResponse, mainResponseData) ->
+                viewModel._combinedLiveData.observe(this@MainActivity, Observer { (stocksResponse, mainResponseData) ->
                     val stockList = stocksResponse?.mypageDefaults
                     val currentFields = mainResponseData.currentResponseData.fields
                     val oldFields = mainResponseData.oldStocklistResponseData.fields
@@ -93,7 +92,7 @@ class MainActivity : AppCompatActivity() {
 
             sortOrder?.let {
                 isSorting = true
-                viewModel.combinedLiveData.observe(this@MainActivity, Observer { (stocksResponse, mainResponseData) ->
+                viewModel._combinedLiveData.observe(this@MainActivity, Observer { (stocksResponse, mainResponseData) ->
                     val stockList = stocksResponse?.mypageDefaults
                     val currentFields = mainResponseData.currentResponseData.fields
                     val oldFields = mainResponseData.oldStocklistResponseData.fields
@@ -105,7 +104,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        viewModel.combinedLiveData.observe(this, Observer { (stocksResponse, mainResponseData) ->
+        viewModel._combinedLiveData.observe(this, Observer { (stocksResponse, mainResponseData) ->
 
                 val stockList = stocksResponse?.mypageDefaults
                 val currentFields = mainResponseData.currentResponseData.fields
@@ -114,7 +113,6 @@ class MainActivity : AppCompatActivity() {
                 if (stockList != null && currentFields != null && oldFields != null) {
                     adapter.update(stockList, currentFields, oldFields, SortColumnValue.CURRENTSORT)
                 }
-
         })
     }
 }

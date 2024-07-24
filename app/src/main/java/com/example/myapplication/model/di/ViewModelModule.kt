@@ -17,10 +17,4 @@ object ViewModelModule {
     fun provideRetrofitService(): ApiInterface {
         return RetrofitServiceInstance.getInstance().create(ApiInterface::class.java)
     }
-
-    @Singleton
-    @Provides
-    fun providePreviousLasValue(): String {
-        return ""
-    }
 }
